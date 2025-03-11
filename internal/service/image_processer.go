@@ -2,118 +2,71 @@ package service
 
 import (
 	"errors"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
+	"math/rand"
+	"net/http"
 	"time"
 
 	"github.com/ocmodi21/image-processing-service/internal/models"
-	"github.com/ocmodi21/image-processing-service/internal/queue"
-	"github.com/ocmodi21/image-processing-service/internal/storage"
 )
 
-var (
-	ErrInvalidRequest = errors.New("invalid request: count does not match number of visits")
-)
+// ImageProcessor handles the processing of images
+type ImageProcessor struct{}
 
-// JobService handles the business logic for job management
-type JobService struct {
-	jobStorage     *storage.JobStorage
-	storeStorage   *storage.StoreStorage
-	jobQueue       *queue.JobQueue
-	imageProcessor *ImageProcessor
+func NewImageProcessor() *ImageProcessor {
+	return &ImageProcessor{}
 }
 
-func NewJobService(
-	jobStorage *storage.JobStorage,
-	storeStorage *storage.StoreStorage,
-	jobQueue *queue.JobQueue,
-	imageProcessor *ImageProcessor,
-) *JobService {
-	return &JobService{
-		jobStorage:     jobStorage,
-		storeStorage:   storeStorage,
-		jobQueue:       jobQueue,
-		imageProcessor: imageProcessor,
-	}
-}
+// ProcessImages downloads and processes a list of image URLs
+func (p *ImageProcessor) ProcessImages(urls []string) ([]models.ImageResult, error) {
+	results := make([]models.ImageResult, 0, len(urls))
 
-// CreateJob creates a new job and enqueues it for processing
-func (s *JobService) CreateJob(req *models.JobSubmissionRequest) (string, error) {
-	// Validate request
-	if req.Count != len(req.Visits) {
-		return "", ErrInvalidRequest
+	for _, url := range urls {
+		result, err := p.processImage(url)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, result)
 	}
 
-	// Create a new job
-	job := &models.Job{
-		Status:    models.JobStatusPending,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Visits:    req.Visits,
-		Count:     req.Count,
-	}
-
-	// Store the job
-	jobID := s.jobStorage.CreateJob(job)
-
-	// Enqueue the job for processing
-	s.jobQueue.Enqueue(jobID)
-
-	return jobID, nil
+	return results, nil
 }
 
-// GetJob retrieves a job by ID
-func (s *JobService) GetJob(jobID string) (*models.Job, error) {
-	return s.jobStorage.GetJob(jobID)
-}
-
-// ProcessJob processes a job
-func (s *JobService) ProcessJob(jobID string) {
-	job, err := s.jobStorage.GetJob(jobID)
+// processImage downloads and processes a single image
+func (p *ImageProcessor) processImage(url string) (models.ImageResult, error) {
+	// Download the image
+	resp, err := http.Get(url)
 	if err != nil {
-		// Log error
-		return
+		return models.ImageResult{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return models.ImageResult{}, errors.New("failed to download image")
 	}
 
-	// Update job status to ongoing
-	job.Status = models.JobStatusOngoing
-	job.UpdatedAt = time.Now()
-	s.jobStorage.UpdateJob(job)
-
-	// Process each visit
-	hasErrors := false
-	for i, visit := range job.Visits {
-		// Check if store exists
-		_, err := s.storeStorage.GetStore(visit.StoreID)
-		if err != nil {
-			hasErrors = true
-			job.Errors = append(job.Errors, models.JobError{
-				StoreID: visit.StoreID,
-				Error:   "store not found",
-			})
-			continue
-		}
-
-		// Process images for this visit
-		results, err := s.imageProcessor.ProcessImages(visit.ImageURLs)
-		if err != nil {
-			hasErrors = true
-			job.Errors = append(job.Errors, models.JobError{
-				StoreID: visit.StoreID,
-				Error:   err.Error(),
-			})
-			continue
-		}
-
-		// Update visit with results
-		job.Visits[i].Results = results
+	// Decode the image
+	img, _, err := image.Decode(resp.Body)
+	if err != nil {
+		return models.ImageResult{}, err
 	}
 
-	// Update job status based on processing results
-	if hasErrors {
-		job.Status = models.JobStatusFailed
-	} else {
-		job.Status = models.JobStatusCompleted
-	}
+	// Calculate the perimeter
+	bounds := img.Bounds()
+	width := bounds.Max.X - bounds.Min.X
+	height := bounds.Max.Y - bounds.Min.Y
+	perimeter := 2 * float64(width+height)
 
-	job.UpdatedAt = time.Now()
-	s.jobStorage.UpdateJob(job)
+	// Random sleep to simulate GPU processing
+	sleepTime := 100 + rand.Intn(301) // 100-400 milliseconds
+	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
+
+	return models.ImageResult{
+		URL:         url,
+		Perimeter:   perimeter,
+		ProcessedAt: time.Now(),
+	}, nil
 }
