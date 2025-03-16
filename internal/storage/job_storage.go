@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"strconv"
 	"sync"
 
 	"github.com/ocmodi21/image-processing-service/internal/models"
@@ -12,7 +13,6 @@ var (
 )
 
 // JobStorage represents an in-memory storage for jobs
-// In a production environment, this would be replaced with a database
 type JobStorage struct {
 	mu     sync.RWMutex
 	jobs   map[string]*models.Job
@@ -31,7 +31,7 @@ func (s *JobStorage) CreateJob(job *models.Job) string {
 	defer s.mu.Unlock()
 
 	// Generate a job ID
-	jobID := string(rune(s.nextID))
+	jobID := strconv.Itoa(s.nextID)
 	s.nextID++
 
 	job.ID = jobID

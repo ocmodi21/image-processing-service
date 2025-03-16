@@ -2,15 +2,14 @@ package main
 
 import (
 	"context"
-	"flag"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/ocmodi21/image-processing-service/config"
 	"github.com/ocmodi21/image-processing-service/internal/api"
 	"github.com/ocmodi21/image-processing-service/internal/queue"
 	"github.com/ocmodi21/image-processing-service/internal/service"
@@ -18,23 +17,18 @@ import (
 )
 
 func main() {
-	// Seed the random number generator
-	rand.Seed(time.Now().UnixNano())
-
-	// Parse command line flags
-	var (
-		addr       = flag.String("addr", ":8080", "HTTP server address")
-		storePath  = flag.String("store-path", "./store_master.csv", "Path to the store master CSV file")
-		numWorkers = flag.Int("workers", 4, "Number of worker goroutines")
-	)
-	flag.Parse()
+	// Load configuration
+	cfg, err := config.LoadConfig("./config/config.json")
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
 
 	// Create storage
 	jobStorage := storage.NewJobStorage()
 	storeStorage := storage.NewStoreStorage()
 
 	// Load store data
-	if err := storeStorage.LoadFromCSV(*storePath); err != nil {
+	if err := storeStorage.LoadFromCSV(cfg.Storage.StoreMasterPath); err != nil {
 		log.Fatalf("Failed to load store data: %v", err)
 	}
 
@@ -45,7 +39,7 @@ func main() {
 	var jobService *service.JobService
 
 	// Create job queue with processor function
-	jobQueue := queue.NewJobQueue(*numWorkers, func(jobID string) {
+	jobQueue := queue.NewJobQueue(cfg.Processing.NumWorkers, func(jobID string) {
 		jobService.ProcessJob(jobID)
 	})
 
@@ -54,7 +48,7 @@ func main() {
 
 	// Create API handler and server
 	handler := api.NewHandler(jobService)
-	server := api.NewServer(*addr, handler)
+	server := api.NewServer(cfg.Server.Port, handler)
 
 	// Start job queue
 	jobQueue.Start()

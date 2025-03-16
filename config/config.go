@@ -17,16 +17,29 @@ type Config struct {
 	} `json:"processing"`
 }
 
+// LoadConfig loads configuration from a JSON file and sets default values if not provided
 func LoadConfig(filePath string) (*Config, error) {
+	config := &Config{}
+
+	// Set default values
+	config.Server.Port = ":8080"
+	config.Storage.StoreMasterPath = "./store_master.csv"
+	config.Processing.NumWorkers = 4
+
 	file, err := os.Open(filePath)
 	if err != nil {
+		// If the file doesn't exist, return the config with default values
+		if os.IsNotExist(err) {
+			return config, nil
+		}
 		return nil, err
 	}
 	defer file.Close()
-	config := &Config{}
+
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(config); err != nil {
 		return nil, err
 	}
+
 	return config, nil
 }
