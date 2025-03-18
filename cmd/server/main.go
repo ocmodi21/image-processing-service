@@ -35,7 +35,7 @@ func main() {
 	// Create image processor
 	imageProcessor := service.NewImageProcessor()
 
-	// Create job service (circular dependency, will be resolved below)
+	// Create job service
 	var jobService *service.JobService
 
 	// Create job queue with processor function
@@ -43,7 +43,6 @@ func main() {
 		jobService.ProcessJob(jobID)
 	})
 
-	// Resolve circular dependency
 	jobService = service.NewJobService(jobStorage, storeStorage, jobQueue, imageProcessor)
 
 	// Create API handler and server

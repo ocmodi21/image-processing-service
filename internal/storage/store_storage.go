@@ -54,7 +54,6 @@ func (s *StoreStorage) LoadFromCSV(filePath string) error {
 			return err
 		}
 
-		// Assuming CSV has columns: store_id, store_name, area_code
 		if len(record) >= 3 {
 			store := &models.Store{
 				AreaCode: record[0],
