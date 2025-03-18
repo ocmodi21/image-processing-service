@@ -8,5 +8,3 @@ services:
       - "8080:8080"
     volumes:
       - ./store_master.csv:/app/store_master.csv
-    environment:
-      - TZ=UTC
