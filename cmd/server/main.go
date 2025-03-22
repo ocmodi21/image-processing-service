@@ -33,12 +33,7 @@ func main() {
 
 	// Create storage
 	jobStorage := storage.NewJobStorage()
-	storeStorage := storage.NewStoreStorage()
-
-	// Load store data
-	if err := storeStorage.LoadFromCSV(cfg.Storage.StoreMasterPath); err != nil {
-		log.Fatalf("Failed to load store data: %v", err)
-	}
+	storeStorage := storage.NewStoreStorage(db)
 
 	// Create image processor
 	imageProcessor := service.NewImageProcessor()
