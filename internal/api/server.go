@@ -18,8 +18,8 @@ func NewServer(addr string, handler *Handler) *Server {
 	mux := http.NewServeMux()
 
 	// Register routes
-	mux.HandleFunc("/api/submit", handler.SubmitJob)
-	mux.HandleFunc("/api/status", handler.GetJobStatus)
+	mux.HandleFunc("/api/v1/job/submit", handler.SubmitJob)
+	mux.HandleFunc("/api/v1/job/status", handler.GetJobStatus)
 	server := &http.Server{
 		Addr:         addr,
 		Handler:      mux,
