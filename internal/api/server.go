@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/ocmodi21/image-processing-service/internal/middleware"
 )
 
 // Server represents the HTTP server
@@ -18,8 +20,8 @@ func NewServer(addr string, handler *Handler) *Server {
 	mux := http.NewServeMux()
 
 	// Register routes
-	mux.HandleFunc("/api/v1/job/submit", handler.SubmitJob)
-	mux.HandleFunc("/api/v1/job/status", handler.GetJobStatus)
+	mux.Handle("/api/v1/job/submit", middleware.Logger(http.HandlerFunc(handler.SubmitJob)))
+	mux.Handle("/api/v1/job/status", middleware.Logger(http.HandlerFunc(handler.GetJobStatus)))
 	server := &http.Server{
 		Addr:         addr,
 		Handler:      mux,
