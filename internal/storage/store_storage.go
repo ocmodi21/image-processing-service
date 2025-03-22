@@ -7,6 +7,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/ocmodi21/image-processing-service/internal/database"
 	"github.com/ocmodi21/image-processing-service/internal/models"
 )
 
@@ -18,11 +19,13 @@ var (
 type StoreStorage struct {
 	mu     sync.RWMutex
 	stores map[string]*models.Store
+	db     *database.PGClient
 }
 
-func NewStoreStorage() *StoreStorage {
+func NewStoreStorage(db *database.PGClient) *StoreStorage {
 	return &StoreStorage{
 		stores: make(map[string]*models.Store),
+		db:     db,
 	}
 }
 
