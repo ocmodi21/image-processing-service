@@ -9,6 +9,14 @@ type Config struct {
 	Server struct {
 		Port string `json:"port"`
 	} `json:"server"`
+	Database struct {
+		Provider string `json:"provider"`
+		User     string `json:"user"`
+		Password string `json:"password"`
+		Dbname   string `json:"dbname"`
+		Host     string `json:"host"`
+		SSLmode  bool   `json:"sslmode"`
+	} `json:"database"`
 	Storage struct {
 		StoreMasterPath string `json:"store_master_path"`
 	} `json:"storage"`

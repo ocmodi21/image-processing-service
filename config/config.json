@@ -2,6 +2,14 @@
   "server": {
     "port": ":8080"
   },
+  "database": {
+    "provider": "postgres",
+    "user": "postgres",
+    "password": "postgres",
+    "dbname": "postgres",
+    "host": "localhost",
+    "sslmode": false
+  },
   "storage": {
     "store_master_path": "./store_master.csv"
   },

@@ -11,6 +11,7 @@ import (
 
 	"github.com/ocmodi21/image-processing-service/config"
 	"github.com/ocmodi21/image-processing-service/internal/api"
+	"github.com/ocmodi21/image-processing-service/internal/database"
 	"github.com/ocmodi21/image-processing-service/internal/queue"
 	"github.com/ocmodi21/image-processing-service/internal/service"
 	"github.com/ocmodi21/image-processing-service/internal/storage"
@@ -22,6 +23,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
+
+	// Connect to database
+	db, err := database.Connect(cfg.Database.Provider, cfg.Database.User, cfg.Database.Password, cfg.Database.Dbname, cfg.Database.Host, cfg.Database.SSLmode)
+	if err != nil {
+		log.Fatalf("Database connection failed: %v", err)
+	}
+	defer db.Close()
 
 	// Create storage
 	jobStorage := storage.NewJobStorage()
