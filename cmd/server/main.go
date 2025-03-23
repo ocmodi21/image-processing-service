@@ -24,12 +24,20 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	// Connect to database
-	db, err := database.Connect(cfg.Database.Provider, cfg.Database.User, cfg.Database.Password, cfg.Database.Dbname, cfg.Database.Host, cfg.Database.SSLmode)
+	// Connect to postgres database
+	db, err := database.ConnectPostgres(cfg.Database.Provider, cfg.Database.User, cfg.Database.Password, cfg.Database.Dbname, cfg.Database.Host, cfg.Database.SSLmode)
 	if err != nil {
 		log.Fatalf("Database connection failed: %v", err)
 	}
 	defer db.Close()
+
+	// Connect to redis database
+	ctx := context.Background()
+	redisClient, err := database.ConnectRedis(ctx)
+	if err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+	defer redisClient.RedisDB.Close()
 
 	// Create storage
 	jobStorage := storage.NewJobStorage()

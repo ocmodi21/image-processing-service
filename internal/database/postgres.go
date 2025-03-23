@@ -14,7 +14,7 @@ type PGClient struct {
 }
 
 // Connect establishes a connection to the database and returns a PGClient instance.
-func Connect(provider, user, password, dbname, host string, sslmode bool) (*PGClient, error) {
+func ConnectPostgres(provider, user, password, dbname, host string, sslmode bool) (*PGClient, error) {
 	sslmodeStr := "disable"
 	if sslmode {
 		sslmodeStr = "require"
@@ -32,13 +32,13 @@ func Connect(provider, user, password, dbname, host string, sslmode bool) (*PGCl
 		return nil, fmt.Errorf("database connection test failed: %w", err)
 	}
 
-	log.Println("Successfully connected to the database")
+	log.Println("Successfully connected to the postgres database")
 	return &PGClient{DB: db}, nil
 }
 
 // Close closes the database connection.
-func (dbw *PGClient) Close() {
-	if err := dbw.DB.Close(); err != nil {
+func (db *PGClient) Close() {
+	if err := db.DB.Close(); err != nil {
 		log.Printf("Error closing database: %v", err)
 	} else {
 		log.Println("Database connection closed")
